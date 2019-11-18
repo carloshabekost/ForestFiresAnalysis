@@ -1,0 +1,137 @@
+---
+title: "Forest Fires in Brazil"
+author: "Carlos Habekost"
+date: "13/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Forest Fires in Brazil
+This document aiming to analisys the fires occured in Brazil during XXX.
+
+Columns of table:\\
+**year:** when Forest Fires happen\\
+**state:** Brazilian State\\
+**month:** Month when Forest Fires happen\\
+**number:** Number of Forest Fires reported\\
+**date:** Date when Forest Fires where reported\\
+
+
+## Analisys
+
+Data Table:
+
+```{r pressure, echo=FALSE}
+
+if(!require(ggmap)){install.packages("ggmap")}
+if(!require(dplyr)){install.packages("dplyr")}
+if(!require(maptools)){install.packages("maptools")}
+if(!require(rgdal)){install.packages("rgdal")}
+if(!require(raster)){install.packages("raster")}
+if(!require(maps)){install.packages("maps")}
+if(!require(RgoogleMaps)){install.packages("RgoogleMaps")}
+
+if(!require(ggplot2)){install.packages("ggplot2")}
+if(!require(hrbrthemes)){install.packages("hrbrthemes")}
+if(!require(plotly)){install.packages("plotly")}
+
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(readr)){install.packages("readr")}
+
+
+
+
+# plot(pressure)
+```
+
+```{r}
+reportFires <- read_csv(file="amazon.csv")
+print(reportFires)
+
+options(scipen = 10000)
+
+summary(reportFires)
+```
+
+
+
+```{r}
+library(dplyr)
+
+analyzedData <- reportFires[c("state", "month", "number")]
+print(analyzedData)
+
+analyzedData2 <- reportFires %>% select(-date) %>%
+  group_by(state, month) %>%
+  summarise(totalFires = sum(number))
+
+print(analyzedData2)
+
+
+summarisedFires <- analyzedData %>%
+  mutate(month = factor(month, levels = c("January",
+                                          "February",
+                                          "March", 
+                                          "April", 
+                                          "May", 
+                                          "June", 
+                                          "July", 
+                                          "August", 
+                                          "September", 
+                                          "October", 
+                                          "November", 
+                                          "December"))) %>%
+  group_by(state, month) %>% 
+  summarise(Frequency = sum(number)) %>%
+  spread(month, Frequency)
+
+print(summarisedFires)
+
+
+var <- analyzedData2 %>%
+  mutate(month = factor(month, levels = c("January", "February","March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))) #%>%
+  
+  
+ggplot(var, aes(x=month,y=reorder(state,desc(state)),fill=totalFires)) + 
+  geom_tile() +
+  scale_fill_gradient(low = "White", high = "red") +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.25)) +
+  xlab( "Month" ) +
+  ylab( "States" ) +
+  labs(fill="Total Fires")
+
+```
+
+
+```{r}
+# Library
+library(ggplot2)
+
+mt <- reportFires %>% filter(state =="Mato Grosso") # %>%
+
+ggplot(mt, aes(x=number)) +
+  geom_histogram(fill = 'red', bins=30)
+```
+
+
+```{r}
+# Library
+library(ggplot2)
+
+ggplot(analyzedData2, aes(x=month,y=totalFires)) +
+  geom_col() 
+
+
+```
+
+
+
+
+
+
+
+
+
