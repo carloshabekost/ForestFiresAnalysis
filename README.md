@@ -1,4 +1,4 @@
-# ForestFiresAnalysis
+# Forest Fires Analysis
 
 Repository was created aiming to analyse the Forest Fires in Brazil. This is the final work of SMPE-UFRGS. I created the following files:
 
