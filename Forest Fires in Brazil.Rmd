@@ -1,7 +1,7 @@
 ---
 title: "Forest Fires in Brazil"
 author: "Carlos Habekost"
-date: "13/11/2019"
+date: "18/11/2019"
 output: html_document
 ---
 
@@ -9,31 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Forest Fires in Brazil
-This document aiming to analisys the fires occured in Brazil during XXX.
 
-Columns of table:\\
-**year:** when Forest Fires happen\\
-**state:** Brazilian State\\
-**month:** Month when Forest Fires happen\\
-**number:** Number of Forest Fires reported\\
-**date:** Date when Forest Fires where reported\\
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 
-
-## Analisys
-
-Data Table:
-
-```{r pressure, echo=FALSE}
-
-if(!require(ggmap)){install.packages("ggmap")}
-if(!require(dplyr)){install.packages("dplyr")}
-if(!require(maptools)){install.packages("maptools")}
-if(!require(rgdal)){install.packages("rgdal")}
-if(!require(raster)){install.packages("raster")}
-if(!require(maps)){install.packages("maps")}
-if(!require(RgoogleMaps)){install.packages("RgoogleMaps")}
-
+#Packages required
 if(!require(ggplot2)){install.packages("ggplot2")}
 if(!require(hrbrthemes)){install.packages("hrbrthemes")}
 if(!require(plotly)){install.packages("plotly")}
@@ -41,63 +20,60 @@ if(!require(plotly)){install.packages("plotly")}
 if(!require(tidyverse)){install.packages("tidyverse")}
 if(!require(readr)){install.packages("readr")}
 
-
-
-
-# plot(pressure)
-```
-
-```{r}
-reportFires <- read_csv(file="amazon.csv")
-print(reportFires)
-
 options(scipen = 10000)
 
+```
+
+## Introduction
+
+This document is aiming to analysis the forest fires that occurred in Brazil from 1998 to 2017. Forest Fires are a critical problem for the Tropical Forest in Brazil. I obtained this data from [kaggle.com](https://www.kaggle.com/gustavomodelli/forest-fires-in-brazil), who organized the data initially derived from the official website of the [Brazilian government](http://dados.gov.br/dataset/sistema-nacional-de-informacoes-florestais-snif).
+
+With this analysis, we can identify fires occurred in Brazilian states, considering: Year, month e number of Fires happened.
+
+## Analisys Performed
+
+The original data set has 6,444 rows. The following columns were identified:
+
+- **year:** when Forest Fires happened
+- **state:** Brazilian State
+- **month:** Month when Forest Fires happened
+- **number:** Number of Forest Fires reported
+- **date:** Date when Forest Fires where reported
+
+I had a pre-processing in the data set, aiming to perform correctly in this markdown:
+
+- *Months*: Originally was in Portuguese, I standardization in English.
+- *Standardization of State name accents*: Originally in this data set, the name of some States had an accent; I normalization without accent to avoid issues during the execution of this markdown.
+
+```{r}
+reportFires <- read.csv(file="amazon.csv")
+
+#print(reportFires)
+```
+
+With the data ready, I first summarize some information about the dataset:
+
+```{r}
 summary(reportFires)
 ```
 
-
+Second, using ggplot, I plot a heatmap aiming to identify the most reported state with fires. It is evident that the state of Mato Grosso is most affected by fires (totaling 250000+ fires reported):
 
 ```{r}
 library(dplyr)
-
-analyzedData <- reportFires[c("state", "month", "number")]
-print(analyzedData)
 
 analyzedData2 <- reportFires %>% select(-date) %>%
   group_by(state, month) %>%
   summarise(totalFires = sum(number))
 
-print(analyzedData2)
-
-
-summarisedFires <- analyzedData %>%
-  mutate(month = factor(month, levels = c("January",
-                                          "February",
-                                          "March", 
-                                          "April", 
-                                          "May", 
-                                          "June", 
-                                          "July", 
-                                          "August", 
-                                          "September", 
-                                          "October", 
-                                          "November", 
-                                          "December"))) %>%
-  group_by(state, month) %>% 
-  summarise(Frequency = sum(number)) %>%
-  spread(month, Frequency)
-
-print(summarisedFires)
-
 
 var <- analyzedData2 %>%
-  mutate(month = factor(month, levels = c("January", "February","March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))) #%>%
-  
+  mutate(month = factor(month, levels = c("January", "February","March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))) 
+  #%>%
   
 ggplot(var, aes(x=month,y=reorder(state,desc(state)),fill=totalFires)) + 
   geom_tile() +
-  scale_fill_gradient(low = "White", high = "red") +
+  scale_fill_gradient(low = "white", high = "red") +
   theme(axis.text.x = element_text(angle = 90, vjust=0.25)) +
   xlab( "Month" ) +
   ylab( "States" ) +
@@ -105,32 +81,57 @@ ggplot(var, aes(x=month,y=reorder(state,desc(state)),fill=totalFires)) +
 
 ```
 
+In the third analysis, I investigate the fire reported by the state. As a result, considering the period analyzed, Mato Grosso has the most number of fires (with 767,890), Para (577,481) and Maranhão (375,279).
 
 ```{r}
 # Library
 library(ggplot2)
 
-mt <- reportFires %>% filter(state =="Mato Grosso") # %>%
+var %>% group_by(state) %>% summarise(totalFires = sum(totalFires)) %>%
+ggplot(aes(x=state,y = totalFires, fill=totalFires)) +
+  geom_col() +
+  xlab( "State" ) +
+  ylab( "Number of Fires" )+
+  scale_fill_gradient(low = "green", high = "red") +
+  geom_text(aes(label=totalFires), vjust=-0.3) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.25), legend.position = "none")
 
-ggplot(mt, aes(x=number)) +
-  geom_histogram(fill = 'red', bins=30)
 ```
+
+
+In the fourth analysis, I considered the month with more cases of fire, considering all fires reported. As a result, I identified that September has the most number of fire reports (totalizing 1,015,925), after August (740,841 reports) and October (629,665 reports).
 
 
 ```{r}
 # Library
 library(ggplot2)
 
-ggplot(analyzedData2, aes(x=month,y=totalFires)) +
-  geom_col() 
-
+var %>% group_by(month) %>% summarise(totalFires = sum(totalFires)) %>%
+ggplot(aes(x=month,y = totalFires, fill=totalFires)) +
+  geom_col() +
+  xlab( "Month" ) +
+  ylab( "Number of Fires" )+
+  scale_fill_gradient(low = "green", high = "red") +
+  geom_text(aes(label=totalFires), vjust=-0.3) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.25), legend.position = "none")
 
 ```
 
+Finally, I tried to perform other analyzes using ggplot. However, I did not obtain an expressive result to include in this work. 
 
+As an example, I present an analysis considering the state of the Mato Grosso, using a histogram graph. However, the obtained graph has a few analysis values. Also, I tried to plot this graph, considering the data for all states. However, the results obtained were similar to the heatmap graph.
 
+```{r}
+# Library
+library(ggplot2)
 
-
+reportFires %>% filter(state =="Mato Grosso") %>%
+  ggplot(aes(x=number)) +
+  geom_histogram(fill = 'red', bins=30) +
+  theme_bw()
+```
 
 
 
